@@ -3,42 +3,44 @@ import zipfile
 import os
 from botocore.exceptions import ClientError
 
+# AWS configuration
 AWS_REGION = 'us-east-1'
 lambda_client = boto3.client('lambda', region_name=AWS_REGION)
 
-def deploy_lambda_function():
+def deploy_lambda_function(role_arn="arn:aws:iam::123456789012:role/LambdaExecutionRole"):
     """
-    Deploys a Lambda function that processes files uploaded to S3.
-    It checks for supported formats and moves them into a staging area.
+    Deploys an AWS Lambda function that listens for S3 events and moves
+    supported files (.csv, .json, .xml, .txt) to a staging folder.
+
+    Parameters:
+    - role_arn (str): The ARN of the IAM role with Lambda execution permissions.
+                      Default should be replaced with your actual IAM role ARN.
     """
-    role_arn = input("Enter your Lambda IAM role ARN: ")
 
-    lambda_code = '''import boto3
-import urllib.parse
+    # Load Lambda handler code from external Python file
+    lambda_code_path = 'lambda_function/lambda_function.py'
+    with open(lambda_code_path, 'r') as f:
+        lambda_code = f.read()
 
-def lambda_handler(event, context):
-    s3 = boto3.client('s3')
-    supported_ext = ['.csv', '.json', '.xml', '.txt']
-    for record in event['Records']:
-        src_bucket = record['s3']['bucket']['name']
-        src_key = urllib.parse.unquote_plus(record['s3']['object']['key'])
-        if any(src_key.endswith(ext) for ext in supported_ext):
-            dest_key = f'staging/{src_key.split("/")[-1]}'
-            s3.copy_object(Bucket=src_bucket, CopySource={'Bucket': src_bucket, 'Key': src_key}, Key=dest_key)
-            s3.delete_object(Bucket=src_bucket, Key=src_key)
-    return {'status': 'done'}
-'''
+    # Create a temporary directory to build the deployment package
+    build_dir = 'lambda_build'
+    os.makedirs(build_dir, exist_ok=True)
 
-    os.makedirs('lambda_build', exist_ok=True)
-    with open('lambda_build/lambda_function.py', 'w') as f:
+    lambda_source_file = os.path.join(build_dir, 'lambda_function.py')
+    with open(lambda_source_file, 'w') as f:
         f.write(lambda_code)
-    with zipfile.ZipFile('lambda_build/deployment_package.zip', 'w') as z:
-        z.write('lambda_build/lambda_function.py', arcname='lambda_function.py')
 
-    with open('lambda_build/deployment_package.zip', 'rb') as f:
+    # Create ZIP package for Lambda deployment
+    zip_file_path = os.path.join(build_dir, 'deployment_package.zip')
+    with zipfile.ZipFile(zip_file_path, 'w') as z:
+        z.write(lambda_source_file, arcname='lambda_function.py')
+
+    # Load zipped code
+    with open(zip_file_path, 'rb') as f:
         zipped_code = f.read()
 
     try:
+        # Deploy the Lambda function
         lambda_client.create_function(
             FunctionName='UnstructuredDataLambda',
             Runtime='python3.9',
@@ -48,6 +50,6 @@ def lambda_handler(event, context):
             Timeout=60,
             MemorySize=128,
         )
-        print("[Lambda] Function 'UnstructuredDataLambda' created.")
+        print("[Lambda] Function 'UnstructuredDataLambda' created successfully.")
     except ClientError as e:
         print("[Lambda] Error creating function:", e)
