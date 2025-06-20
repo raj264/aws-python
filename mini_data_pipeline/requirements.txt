@@ -1,0 +1,8 @@
+boto3
+requests
+zeep
+grpcio
+pyspark
+pydeequ
+great_expectations
+psycopg2-binary
