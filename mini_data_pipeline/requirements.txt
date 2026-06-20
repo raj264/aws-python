@@ -6,3 +6,6 @@ pyspark
 pydeequ
 great_expectations
 psycopg2-binary
+python-dotenv
+pyarrow
+s3fs

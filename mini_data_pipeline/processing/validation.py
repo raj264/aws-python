@@ -9,10 +9,25 @@ from pydeequ.verification import VerificationSuite
 import great_expectations as ge
 
 def validate_schema_glue(bucket: str, key: str, registry: str, schema: str) -> bool:
-    """Check S3 object against Glue Schema Registry.
-    :return: True if matches, False otherwise"""
-    # TODO: Use AWS Glue API for schema comparison
-    return True
+    """Check that an S3 JSON object's top-level fields match the fields
+    registered in the AWS Glue Schema Registry for the given schema.
+    :return: True if the object's fields are a subset of the registered schema."""
+    glue = boto3.client('glue')
+    s3 = boto3.client('s3')
+
+    schema_version = glue.get_schema_version(
+        SchemaId={'RegistryName': registry, 'SchemaName': schema},
+        SchemaVersionNumber={'LatestVersion': True},
+    )
+    registered_fields = {
+        field['name'] for field in json.loads(schema_version['SchemaDefinition'])['fields']
+    }
+
+    obj = s3.get_object(Bucket=bucket, Key=key)
+    record = json.loads(obj['Body'].read())
+    record_fields = set(record.keys())
+
+    return record_fields.issubset(registered_fields)
 
 def validate_record_rules(bucket: str, key: str) -> bool:
     """Run PySpark rules: non-null id/timestamp and email regex."""

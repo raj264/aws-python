@@ -15,9 +15,10 @@ jobs:
         with:
           python-version: '3.11'
       - name: Test mini_data_pipeline
+        env:
+          SPARK_VERSION: '3.5'
         run: |
-          pip install boto3 requests python-dotenv pytest
-          cd mini_data_pipeline && python -m pytest tests/ -v
+          cd mini_data_pipeline && pip install -r requirements.txt pytest && python -m pytest tests/ -v
       - name: Test unstructured-data-pipeline
         run: |
           cd unstructured-data-pipeline && python -m pytest tests/ -v

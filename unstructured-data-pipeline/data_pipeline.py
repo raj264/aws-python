@@ -1,16 +1,14 @@
+import os
+
 from modules.s3_setup import create_bucket
 from modules.lambda_deploy import deploy_lambda_function
 from modules.glue_setup import setup_glue_resources
 
 # Default AWS resource names
-RAW_BUCKET = 'unstructured-raw-data-bucket'
-PROCESSED_BUCKET = 'unstructured-processed-data-bucket'
+RAW_BUCKET = os.getenv('RAW_BUCKET', 'unstructured-raw-data-bucket')
+PROCESSED_BUCKET = os.getenv('PROCESSED_BUCKET', 'unstructured-processed-data-bucket')
 
-# Replace these with your actual IAM Role ARNs
-DEFAULT_LAMBDA_ROLE_ARN = "arn:aws:iam::123456789012:role/MyLambdaExecutionRole"
-DEFAULT_GLUE_ROLE_ARN = "arn:aws:iam::123456789012:role/MyGlueCrawlerRole"
-
-def main(lambda_role_arn=DEFAULT_LAMBDA_ROLE_ARN, glue_role_arn=DEFAULT_GLUE_ROLE_ARN):
+def main(lambda_role_arn=None, glue_role_arn=None):
     """
     Main function to orchestrate the setup of the unstructured data pipeline.
     This includes:

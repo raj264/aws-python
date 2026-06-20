@@ -4,13 +4,13 @@ import os
 import json
 import time
 import boto3
-from ftp_ingest import download_from_ftp, upload_to_s3
-from api_ingest import fetch_rest_api_data, fetch_soap_api_data, fetch_graphql_data, fetch_grpc_data, upload_json_to_s3
-from validation import validate_schema_glue, validate_record_rules, validate_deequ, validate_ge
-from transformation import TransformationJob
-from curated_zone import write_curated_parquet, register_athena_table
-from metadata_catalog import run_glue_crawler, grant_lakeformation_permissions
-from monitoring import monitor_glue_jobs, detect_schema_drift
+from ingestion.ftp_ingest import download_from_ftp, upload_to_s3
+from ingestion.api_ingest import fetch_rest_api_data, fetch_soap_api_data, fetch_graphql_data, fetch_grpc_data, upload_json_to_s3
+from processing.validation import validate_schema_glue, validate_record_rules, validate_deequ, validate_ge
+from processing.transformation import TransformationJob
+from processing.curated_zone import write_curated_parquet, register_athena_table
+from catalog.metadata_catalog import run_glue_crawler, grant_lakeformation_permissions
+from monitoring.monitoring import monitor_glue_jobs, detect_schema_drift
 
 # Initialize AWS clients
 s3 = boto3.client('s3')
@@ -28,6 +28,8 @@ SNS_TOPIC = os.environ['SNS_TOPIC_ARN']
 LOOKUP_JDBC_URL = os.environ.get('LOOKUP_JDBC_URL')
 LOOKUP_TABLE = os.environ.get('LOOKUP_TABLE')
 GLUE_CRAWLER_NAME = os.environ.get('GLUE_CRAWLER_NAME')
+GLUE_DATABASE = os.environ.get('GLUE_DATABASE', 'mini_pipeline_db')
+CURATED_TABLE_NAME = os.environ.get('CURATED_TABLE_NAME', 'curated_records')
 
 def lambda_handler(event, context):
     """Main pipeline orchestration entrypoint."""
@@ -77,7 +79,7 @@ def lambda_handler(event, context):
     for k in results['passed']:
         enriched_key = ENRICHED_PREFIX + k.replace(STAGING_PREFIX, '')
         parquet_path = write_curated_parquet(RAW_BUCKET, enriched_key, CURATED_PREFIX, timestamp)
-        register_athena_table(RAW_BUCKET, parquet_path)
+        register_athena_table(RAW_BUCKET, parquet_path, GLUE_DATABASE, CURATED_TABLE_NAME)
 
     # Update metadata and run crawler
     run_glue_crawler(GLUE_CRAWLER_NAME)

@@ -4,18 +4,19 @@ import os
 from botocore.exceptions import ClientError
 
 # AWS configuration
-AWS_REGION = 'us-east-1'
+AWS_REGION = os.getenv('AWS_REGION', 'us-east-1')
 lambda_client = boto3.client('lambda', region_name=AWS_REGION)
 
-def deploy_lambda_function(role_arn="arn:aws:iam::123456789012:role/LambdaExecutionRole"):
+def deploy_lambda_function(role_arn=None):
     """
     Deploys an AWS Lambda function that listens for S3 events and moves
     supported files (.csv, .json, .xml, .txt) to a staging folder.
 
     Parameters:
     - role_arn (str): The ARN of the IAM role with Lambda execution permissions.
-                      Default should be replaced with your actual IAM role ARN.
+                      Falls back to the LAMBDA_ROLE_ARN environment variable.
     """
+    role_arn = role_arn or os.environ['LAMBDA_ROLE_ARN']
 
     # Load Lambda handler code from external Python file
     lambda_code_path = 'lambda_function/lambda_function.py'

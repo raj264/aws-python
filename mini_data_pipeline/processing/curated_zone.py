@@ -16,8 +16,27 @@ def write_curated_parquet(bucket: str, enriched_key: str, curated_prefix: str, t
     pq.write_to_dataset(table, root_path=out_path, filesystem=fs, partition_cols=['year','month'])
     return out_path
 
-def register_athena_table(bucket: str, parquet_path: str):
-    """Use the Glue Data Catalog/ATHENA API to create or update an external table."""
+def register_athena_table(bucket: str, parquet_path: str, database: str, table: str):
+    """Create or update a Glue Data Catalog table over Parquet data so it's queryable from Athena."""
     glue = boto3.client('glue')
-    # Placeholder: implement create_table or update_table
-    return
+    table_input = {
+        'Name': table,
+        'StorageDescriptor': {
+            'Location': parquet_path,
+            'InputFormat': 'org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat',
+            'OutputFormat': 'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat',
+            'SerdeInfo': {
+                'SerializationLibrary': 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe',
+            },
+        },
+        'PartitionKeys': [
+            {'Name': 'year', 'Type': 'string'},
+            {'Name': 'month', 'Type': 'string'},
+        ],
+        'TableType': 'EXTERNAL_TABLE',
+    }
+
+    try:
+        glue.create_table(DatabaseName=database, TableInput=table_input)
+    except glue.exceptions.AlreadyExistsException:
+        glue.update_table(DatabaseName=database, TableInput=table_input)
