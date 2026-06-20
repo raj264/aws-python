@@ -1,0 +1,93 @@
+# aws-python
+
+A curated collection of serverless data pipeline projects built with AWS services and Python. Each project is modular, cloud-native, and designed for real-world reuse.
+
+## Repository Structure
+
+```
+aws-python/
+├── llms.txt                        # This file — GitMCP documentation index
+├── README.md                       # Repo overview
+├── .gitignore
+├── mini_data_pipeline/             # Serverless multi-protocol ingestion pipeline
+│   ├── main.py                     # Central orchestrator
+│   ├── requirements.txt
+│   ├── README.md
+│   ├── ingestion/                  # FTP, REST/SOAP/GraphQL/gRPC, Kinesis ingestion
+│   ├── processing/                 # Validation, transformation, curated zone writer
+│   ├── catalog/                    # Glue Data Catalog + Lake Formation metadata
+│   ├── monitoring/                 # CloudWatch alerting, schema drift detection
+│   ├── orchestration/              # Lambda handlers
+│   ├── config/                     # Environment config
+│   └── tests/
+└── unstructured-data-pipeline/     # S3 + Lambda + Glue pipeline for unstructured files
+    ├── data_pipeline.py            # Main entry point
+    ├── requirements.txt
+    ├── README.md
+    ├── lambda_function/
+    │   └── lambda_function.py      # Event-driven Lambda trigger
+    └── modules/
+        ├── s3_setup.py             # S3 bucket configuration
+        ├── lambda_deploy.py        # Lambda deployment helper
+        └── glue_setup.py          # Glue crawler/job setup
+```
+
+## Projects
+
+### 1. mini_data_pipeline
+
+A complete serverless data ingestion pipeline on AWS supporting multiple data sources.
+
+**Ingestion sources:** FTP/SFTP, REST, SOAP, GraphQL, gRPC APIs, Kinesis Streams
+
+**Pipeline stages:** Ingestion → Validation → Transformation → Curated Zone → Metadata Catalog → Monitoring
+
+**Key modules:**
+- `ingestion/ftp_ingest.py` — FTP/SFTP file ingestion
+- `ingestion/api_ingest.py` — REST/SOAP/GraphQL/gRPC API ingestion
+- `ingestion/kinesis_ingest.py` — Kinesis stream consumer
+- `processing/validation.py` — Data quality validation (PyDeequ, Great Expectations)
+- `processing/transformation.py` — PySpark transformations
+- `processing/curated_zone.py` — Writes Parquet to S3 curated zone
+- `catalog/metadata_catalog.py` — Registers metadata in Glue Data Catalog and Lake Formation
+- `monitoring/monitoring.py` — CloudWatch metrics and SNS alerting
+- `orchestration/` — Lambda orchestration handlers
+- `main.py` — Runs the full pipeline end-to-end
+
+**AWS services:** S3 (raw/staging/curated zones), Glue, EMR, Lambda, Lake Formation, CloudWatch, SNS
+
+**Tech stack:** Python 3.8+, PySpark, PyDeequ, Great Expectations, boto3
+
+---
+
+### 2. unstructured-data-pipeline
+
+A fully automated pipeline for ingesting and transforming unstructured data files (CSV, JSON, XML, TXT).
+
+**Key modules:**
+- `data_pipeline.py` — Main entry point
+- `lambda_function/lambda_function.py` — Event-driven Lambda trigger on S3 uploads
+- `modules/s3_setup.py` — S3 bucket and prefix configuration
+- `modules/lambda_deploy.py` — Lambda packaging and deployment
+- `modules/glue_setup.py` — Glue crawler and job setup for data cataloging
+
+**AWS services:** S3, Lambda, Glue, IAM
+
+**Tech stack:** Python 3.9+, boto3
+
+---
+
+## Technologies Used
+
+- Python 3.8+
+- AWS SDK for Python (boto3)
+- PySpark
+- PyDeequ
+- Great Expectations
+- AWS: S3, Lambda, Glue, EMR, Lake Formation, Kinesis, CloudWatch, SNS, IAM
+
+## Author
+
+Raj — Python/AWS Software Engineer with 8+ years experience.
+GitHub: https://github.com/raj264
+LinkedIn: https://www.linkedin.com/in/raj264
