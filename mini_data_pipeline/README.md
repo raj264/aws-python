@@ -2,58 +2,48 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/downloads/)
-[![Build](https://img.shields.io/badge/build-passing-brightgreen)]()
-[![Status](https://img.shields.io/badge/status-production-green)]()
-
----
 
 ## 🌟 Overview
 
-This project demonstrates a complete serverless data pipeline on AWS supporting multiple data sources including:
+A serverless ingestion pipeline supporting multiple data sources:
 
 - 🛰 FTP/SFTP
 - 🌐 REST, SOAP, GraphQL, gRPC APIs
 - 🔁 Kinesis Streams
 
-Each stage is modularized, validated, enriched, and stored securely using AWS services like Glue, S3, Lake Formation, and monitored via CloudWatch.
-
----
+Each record is validated (schema + record-level rules, PyDeequ, Great Expectations), transformed/enriched (PySpark), written to a curated Parquet zone, registered in the Glue Data Catalog with Lake Formation permissions, and monitored via CloudWatch/SNS with schema-drift detection.
 
 ## 🔧 Technologies Used
 
-- **AWS Glue / EMR** – Validation, transformation
-- **AWS Lambda** – Orchestration
-- **AWS S3** – Raw, staging, curated zones
-- **Glue Data Catalog & Lake Formation** – Metadata management
-- **PySpark, PyDeequ, Great Expectations** – Quality & processing
-- **CloudWatch, SNS** – Monitoring & alerting
-
----
+- **AWS Lambda** – Orchestration (`orchestration/handler.py`)
+- **AWS S3** – Raw, staging, quarantine, enriched, curated zones
+- **AWS Glue / Glue Data Catalog / Lake Formation** – Schema registry, cataloging, governance
+- **PySpark, PyDeequ, Great Expectations** – Validation and transformation
+- **CloudWatch, SNS** – Job monitoring, failure alerts, schema-drift alerts
 
 ## 📁 Project Structure
 
 ```
 mini_data_pipeline/
-│
-├── ingestion/         # FTP, API, Kinesis ingestion
-├── processing/        # Validation, transformation, writing curated data
-├── catalog/           # Metadata registration (Glue, Lake Formation)
-├── monitoring/        # Alerting & drift detection
-├── orchestration/     # Lambda handlers
-├── config/            # Environment config
-├── main.py            # Central orchestrator
-├── requirements.txt
-├── README.md
+├── ingestion/         # FTP, REST/SOAP/GraphQL/gRPC, Kinesis ingestion
+├── processing/        # Schema/record validation, transformation, curated-zone writes
+├── catalog/           # Glue crawler + Lake Formation permission grants
+├── monitoring/        # Glue job failure alerts, schema-drift detection
+├── orchestration/     # Lambda handler tying every stage together
+├── config/            # Standalone settings module (not currently wired into orchestration/handler.py, which reads os.environ directly)
+├── tests/             # pytest suite
+├── main.py            # Local entry point - invokes orchestration.handler.lambda_handler
+└── requirements.txt
 ```
-
----
 
 ## ⚙️ How to Run
 
-1. **Set environment variables**:
+1. **Set required environment variables** (see `.env.example` at the repo root):
    ```bash
-   export RAW_BUCKET=...
-   export REST_URL=...
+   export RAW_BUCKET=... STAGING_PREFIX=... QUARANTINE_PREFIX=... ENRICHED_PREFIX=... CURATED_PREFIX=...
+   export SNS_TOPIC_ARN=...
+   # PyDeequ requires this at import time - must match an installed Spark version
+   export SPARK_VERSION=3.5
    ```
 
 2. **Install dependencies**:
@@ -61,20 +51,20 @@ mini_data_pipeline/
    pip install -r requirements.txt
    ```
 
-3. **Run the pipeline**:
+3. **Run the pipeline locally**:
    ```bash
    python main.py
    ```
 
-4. **Deploy to AWS** using Lambda, Glue, and CloudFormation/CDK.
+4. **Deploy** `orchestration/handler.py` as the Lambda entry point, with `layer/` containing the shared dependencies.
 
----
+## 🧪 Running Tests
 
-## 📊 Architecture Diagram
+```bash
+SPARK_VERSION=3.5 pytest tests/ -v
+```
 
-> *(Insert your architecture diagram here — optionally export from Lucidchart or draw.io)*
-
----
+Tests mock boto3 (S3, Glue, SNS) and cover ingestion, schema validation, curated-zone registration, and monitoring/drift-detection logic.
 
 ## 📌 Example Athena Query
 
@@ -82,25 +72,14 @@ mini_data_pipeline/
 SELECT * FROM curated_db.curated_table LIMIT 10;
 ```
 
----
-
 ## 📣 Highlights
 
-✅ Multi-protocol ingestion  
-✅ Robust data quality gates  
-✅ Partitioned, queryable Parquet outputs  
-✅ Secure and governed metadata access  
-✅ Alerting for schema drifts and failures
-
----
+- Multi-protocol ingestion
+- Schema + record-level + PyDeequ + Great Expectations quality gates
+- Partitioned, queryable Parquet output registered in Glue/Athena
+- Lake Formation-governed metadata access
+- SNS alerting on Glue job failures and schema drift
 
 ## 📜 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 🤝 Connect
-
-Feel free to connect with me on [LinkedIn](https://www.linkedin.com/in/raj264) or ⭐ the repository if you find it helpful!
-
+MIT License - see [LICENSE](../LICENSE).

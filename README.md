@@ -1,18 +1,16 @@
 # 🧠 AWS + Python Projects
 
-Welcome to **aws-python** — a curated collection of serverless data projects built using **AWS services** and **Python**. Each mini-project is modular, cloud-native, and designed to be reusable in real-world scenarios.
+A curated collection of serverless data projects built using **AWS services** and **Python**. Each mini-project is modular, cloud-native, and designed to be reusable in real-world scenarios.
 
 ---
 
 ## 📦 Projects
 
 ### 🔹 [Unstructured Data Pipeline](./unstructured-data-pipeline/README.md)
-A fully automated pipeline for ingesting and transforming unstructured data files (CSV, JSON, XML, TXT) using:
-- **Amazon S3** for storage
-- **AWS Lambda** for event-driven staging
-- **AWS Glue** for cataloging and preparing the data
+Ingests unstructured files (CSV, JSON, XML, TXT) from S3, stages them via a Lambda trigger, and catalogs them with Glue for querying via Athena/QuickSight.
 
-> 💡 Easily adaptable to any unstructured format. Great for data lake ingestion.
+### 🔹 [Mini Data Pipeline](./mini_data_pipeline/README.md)
+A multi-protocol ingestion pipeline (FTP/SFTP, REST/SOAP/GraphQL/gRPC, Kinesis) with a PySpark/PyDeequ/Great Expectations quality gate, Glue Data Catalog + Lake Formation metadata management, and CloudWatch/SNS monitoring with schema-drift detection.
 
 ---
 
@@ -20,35 +18,30 @@ A fully automated pipeline for ingesting and transforming unstructured data file
 
 - Python 3.9+
 - AWS SDK for Python (`boto3`)
-- AWS services: S3, Lambda, Glue, IAM
+- AWS services: S3, Lambda, Glue, Kinesis, Redshift, Lake Formation, CloudWatch, SNS, IAM
 
 ---
 
 ## 📁 Structure
 
+```
 aws-python/
 ├── README.md
-└── unstructured-data-pipeline/
-    ├── README.md
-    ├── data_pipeline.py
-    ├── requirements.txt
-    ├── lambda_function/
-    │   └── lambda_function.py
-    └── modules/
-        ├── glue_setup.py
-        ├── lambda_deploy.py
-        └── s3_setup.py
+├── unstructured-data-pipeline/   # S3 -> Lambda -> Glue -> Athena
+└── mini_data_pipeline/           # Multi-protocol ingestion -> quality gate -> curated zone
+```
+
+Each sub-project has its own README with setup, environment variables, and testing instructions.
 
 ---
 
 ## 🚀 How to Use This Repo
 
 ```bash
-# Clone the repo
 git clone https://github.com/raj264/aws-python.git
 cd aws-python
 
 # Go into a project and follow its README
-cd unstructured-data-pipeline
+cd unstructured-data-pipeline   # or mini_data_pipeline
 pip install -r requirements.txt
-python data_pipeline.py
+```
